@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kephysiase — Cybersecurity</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --blue: #58a6ff;
+      --blue-bg: #1f3a5c;
+      --green: #3fb950;
+      --purple: #bc8cff;
+      --font: 'Inter', sans-serif;
+      --mono: 'Fira Code', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: 780px; margin: 0 auto; padding: 0 24px; }
+
+    header {
+      padding: 72px 0 48px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--blue-bg);
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(88,166,255,0.2);
+      margin-bottom: 20px;
+      font-family: var(--mono);
+    }
+
+    .badge::before {
+      content: '';
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+    }
+
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 600;
+      letter-spacing: -1px;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    h1 span { color: var(--blue); }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight: 300;
+      max-width: 480px;
+      line-height: 1.7;
+    }
+
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .pill {
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--muted);
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    nav {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    nav a {
+      display: block;
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    nav a:hover { color: var(--text); border-bottom-color: var(--border); text-decoration: none; }
+
+    section {
+      padding: 52px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .about-text {
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 580px;
+      line-height: 1.8;
+    }
+
+    .about-text strong { color: var(--text); font-weight: 500; }
+
+    .projects-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .project-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      transition: border-color 0.15s;
+    }
+
+    .project-card:hover { border-color: #444d56; }
+
+    .project-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--blue);
+      margin-bottom: 6px;
+    }
+
+    .project-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    .project-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+
+    .ptag {
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--bg3);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .ptag.cyber { color: var(--purple); border-color: rgba(188,140,255,0.2); background: rgba(188,140,255,0.05); }
+    .ptag.osint { color: var(--blue); border-color: rgba(88,166,255,0.2); background: rgba(88,166,255,0.05); }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+    }
+
+    .skill-group {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .skill-group-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      font-family: var(--mono);
+    }
+
+    .skill-item {
+      font-size: 13px;
+      color: var(--text);
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .skill-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+    .links-list { display: flex; flex-direction: column; gap: 10px; max-width: 440px; }
+
+    .link-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 20px;
+      transition: border-color 0.15s;
+    }
+
+    .link-row:hover { border-color: #444d56; }
+    .link-platform { font-size: 13px; font-weight: 500; color: var(--text); }
+    .link-url { font-size: 12px; font-family: var(--mono); color: var(--blue); }
+
+    footer {
+      padding: 32px 0;
+      text-align: center;
+    }
+
+    footer p { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="badge">Disponible pour collaborations</div>
+    <h1><span>Kephysiase</span></h1>
+    <p class="subtitle">Passionné de cybersécurité, en apprentissage constant. Je construis des outils pour apprendre et partager mes connaissances.</p>
+    <div class="pills">
+      <span class="pill">OSINT</span>
+      <span class="pill">CTF</span>
+      <span class="pill">Linux</span>
+      <span class="pill">Réseaux</span>
+      <span class="pill">TryHackMe</span>
+    </div>
+  </header>
+
+  <nav>
+    <a href="#about">À propos</a>
+    <a href="#projects">Projets</a>
+    <a href="#skills">Compétences</a>
+    <a href="#links">Liens</a>
+  </nav>
+
+  <section id="about">
+    <h2>À propos</h2>
+    <p class="about-text">
+      Je suis <strong>Kephysiase</strong>, passionné de cybersécurité et en formation active dans ce domaine.
+      Je m'intéresse particulièrement à l'<strong>OSINT</strong>, à la sécurité des réseaux et aux <strong>CTF</strong> (Capture The Flag).
+      <br><br>
+      Sur ce portfolio, vous trouverez les plateformes et outils que j'ai développés pour pratiquer et partager mes apprentissages.
+      Tous mes projets ont une vocation <strong>éducative et éthique</strong>.
+    </p>
+  </section>
+
+  <section id="projects">
+    <h2>Projets</h2>
+    <div class="projects-list">
+
+      <div class="project-card">
+        <div class="project-name">Quiz Cybersécurité — Génie en Herbe</div>
+        <div class="project-desc">Plateforme de quiz interactive sur la cybersécurité au format compétition. Questions sur les fondamentaux, protocoles et types d'attaques.</div>
+        <div class="project-tags">
+          <span class="ptag">HTML</span>
+          <span class="ptag">CSS</span>
+          <span class="ptag">JavaScript</span>
+          <span class="ptag cyber">Cybersécurité</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-name">Quiz Cybersécurité — Volume 2</div>
+        <div class="project-desc">Deuxième édition avec nouveaux modules et niveaux de difficulté progressifs. Focus sur le CTF, le pentest et la sécurité réseau.</div>
+        <div class="project-tags">
+          <span class="ptag">HTML</span>
+          <span class="ptag">CSS</span>
+          <span class="ptag">JavaScript</span>
+          <span class="ptag cyber">CTF</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-name">Spinneur Aléatoire</div>
+        <div class="project-desc">Roue de sélection aléatoire animée, utilisée pour des simulations pédagogiques et des exercices interactifs en groupe.</div>
+        <div class="project-tags">
+          <span class="ptag">HTML</span>
+          <span class="ptag">Canvas API</span>
+          <span class="ptag">JavaScript</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-name">Plateforme OSINT</div>
+        <div class="project-desc">Outil de simulation OSINT pour pratiquer la collecte d'informations depuis des sources ouvertes, de façon éthique et pédagogique.</div>
+        <div class="project-tags">
+          <span class="ptag">HTML</span>
+          <span class="ptag">CSS</span>
+          <span class="ptag">JavaScript</span>
+          <span class="ptag osint">OSINT</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="skills">
+    <h2>Compétences</h2>
+    <div class="skills-grid">
+      <div class="skill-group">
+        <div class="skill-group-title">Réseaux</div>
+        <div class="skill-item"><span class="skill-dot"></span>TCP/IP</div>
+        <div class="skill-item"><span class="skill-dot"></span>Protocoles</div>
+        <div class="skill-item"><span class="skill-dot"></span>Wireshark</div>
+        <div class="skill-item"><span class="skill-dot"></span>Nmap</div>
+      </div>
+      <div class="skill-group">
+        <div class="skill-group-title">Linux</div>
+        <div class="skill-item"><span class="skill-dot"></span>Bash</div>
+        <div class="skill-item"><span class="skill-dot"></span>Administration</div>
+        <div class="skill-item"><span class="skill-dot"></span>Kali Linux</div>
+        <div class="skill-item"><span class="skill-dot"></span>Permissions</div>
+      </div>
+      <div class="skill-group">
+        <div class="skill-group-title">OSINT</div>
+        <div class="skill-item"><span class="skill-dot"></span>Recon passive</div>
+        <div class="skill-item"><span class="skill-dot"></span>WHOIS / DNS</div>
+        <div class="skill-item"><span class="skill-dot"></span>Shodan</div>
+        <div class="skill-item"><span class="skill-dot"></span>Maltego</div>
+      </div>
+      <div class="skill-group">
+        <div class="skill-group-title">Développement</div>
+        <div class="skill-item"><span class="skill-dot"></span>HTML / CSS</div>
+        <div class="skill-item"><span class="skill-dot"></span>JavaScript</div>
+        <div class="skill-item"><span class="skill-dot"></span>Python</div>
+        <div class="skill-item"><span class="skill-dot"></span>Git / GitHub</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="links">
+    <h2>Liens</h2>
+    <div class="links-list">
+      <div class="link-row">
+        <span class="link-platform">GitHub</span>
+        <a class="link-url" href="https://github.com/229-kephy" target="_blank">github.com/229-kephy</a>
+      </div>
+      <div class="link-row">
+        <span class="link-platform">TryHackMe</span>
+        <a class="link-url" href="https://tryhackme.com/p/dirio" target="_blank">tryhackme.com/p/dirio</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 Kephysiase — Portfolio Cybersécurité</p>
+  </footer>
+
+</div>
+</body>
+</html>
