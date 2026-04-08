@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetSniff — Analyseur Réseau</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=VT323&display=swap');
+
+  :root {
+    --green: #00ff88;
+    --green-dim: #00aa55;
+    --green-ghost: rgba(0,255,136,0.07);
+    --red: #ff3366;
+    --yellow: #ffcc00;
+    --cyan: #00ccff;
+    --purple: #cc44ff;
+    --bg: #020a05;
+    --bg2: #040f08;
+    --panel: rgba(0,255,136,0.04);
+    --border: rgba(0,255,136,0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* CRT flicker */
+  @keyframes flicker {
+    0%,100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.96; }
+    94% { opacity: 1; }
+    97% { opacity: 0.98; }
+  }
+  body { animation: flicker 8s infinite; }
+
+  /* Grid background */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  header {
+    position: relative; z-index: 10;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 20px;
+    background: rgba(0,10,5,0.95);
+    backdrop-filter: blur(4px);
+  }
+
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem; font-weight: 900;
+    color: var(--green);
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 20px var(--green), 0 0 40px var(--green-dim);
+  }
+
+  .logo span { color: var(--red); }
+
+  .status-bar {
+    display: flex; gap: 16px; align-items: center;
+    margin-left: auto; font-size: 0.72rem;
+  }
+
+  .badge {
+    padding: 3px 10px; border-radius: 2px;
+    border: 1px solid currentColor; font-size: 0.65rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .badge.live { color: var(--red); animation: pulse-red 1.4s infinite; }
+  .badge.sys { color: var(--cyan); }
+
+  @keyframes pulse-red {
+    0%,100% { box-shadow: 0 0 4px var(--red); }
+    50% { box-shadow: 0 0 12px var(--red), 0 0 24px rgba(255,51,102,0.3); }
+  }
+
+  .stat { color: var(--green-dim); }
+  .stat strong { color: var(--green); }
+
+  /* Layout */
+  .workspace {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    grid-template-rows: auto 1fr;
+    gap: 0;
+    height: calc(100vh - 57px);
+  }
+
+  /* Controls */
+  .controls {
+    grid-column: 1/-1;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 20px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem; letter-spacing: 0.1em;
+    padding: 7px 18px; border-radius: 2px;
+    border: 1px solid var(--green);
+    background: transparent; color: var(--green);
+    cursor: pointer; text-transform: uppercase;
+    transition: all 0.15s;
+    position: relative; overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--green);
+    transform: translateX(-100%);
+    transition: transform 0.15s;
+    z-index: -1;
+  }
+  .btn:hover::before { transform: translateX(0); }
+  .btn:hover { color: var(--bg); }
+  .btn.active { background: var(--green); color: var(--bg); }
+  .btn.danger { border-color: var(--red); color: var(--red); }
+  .btn.danger::before { background: var(--red); }
+  .btn.danger:hover { color: var(--bg); }
+
+  .filter-input {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    background: var(--green-ghost);
+    border: 1px solid var(--border);
+    color: var(--green);
+    padding: 7px 14px; border-radius: 2px;
+    width: 200px; outline: none;
+  }
+  .filter-input:focus { border-color: var(--green); box-shadow: 0 0 8px rgba(0,255,136,0.2); }
+  .filter-input::placeholder { color: var(--green-dim); opacity: 0.5; }
+
+  .speed-control {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.72rem; color: var(--green-dim);
+  }
+  input[type=range] {
+    accent-color: var(--green); width: 80px;
+  }
+
+  /* Packet feed */
+  .packet-feed {
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    position: relative;
+  }
+
+  .feed-header {
+    position: sticky; top: 0;
+    display: grid;
+    grid-template-columns: 60px 80px 130px 130px 70px 80px 1fr;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(0,255,136,0.08);
+    border-bottom: 1px solid var(--border);
+    color: var(--green-dim);
+    font-size: 0.65rem; letter-spacing: 0.08em;
+    z-index: 5;
+  }
+
+  .packet {
+    display: grid;
+    grid-template-columns: 60px 80px 130px 130px 70px 80px 1fr;
+    gap: 8px;
+    padding: 4px 14px;
+    border-bottom: 1px solid rgba(0,255,136,0.05);
+    cursor: pointer;
+    transition: background 0.1s;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .packet:hover { background: var(--green-ghost); }
+  .packet.selected { background: rgba(0,255,136,0.1); border-left: 2px solid var(--green); }
+
+  .proto-TCP  { color: var(--cyan); }
+  .proto-UDP  { color: var(--yellow); }
+  .proto-HTTP { color: var(--green); }
+  .proto-DNS  { color: var(--purple); }
+  .proto-ICMP { color: var(--red); }
+  .proto-ARP  { color: #ff8800; }
+  .proto-TLS  { color: #88ffcc; }
+
+  /* Right panel */
+  .right-panel {
+    display: flex; flex-direction: column;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* Packet detail */
+  .detail-panel {
+    flex: 0 0 auto;
+    border-bottom: 1px solid var(--border);
+    padding: 14px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem; letter-spacing: 0.15em;
+    color: var(--green-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-title::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--border);
+  }
+
+  .hex-view {
+    font-size: 0.62rem; line-height: 1.7;
+    color: var(--green-dim);
+    word-break: break-all;
+  }
+  .hex-view .hex-byte { color: var(--green); }
+  .hex-view .hex-ascii { color: var(--cyan); opacity: 0.7; }
+
+  /* Frequency analysis */
+  .freq-panel {
+    flex: 1;
+    padding: 14px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  .freq-chart {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+
+  .freq-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.65rem;
+  }
+  .freq-label {
+    width: 36px; text-align: right;
+    color: var(--green-dim); font-size: 0.62rem;
+  }
+  .freq-bar-wrap {
+    flex: 1; height: 10px;
+    background: rgba(0,255,136,0.06);
+    border-radius: 1px; overflow: hidden;
+    position: relative;
+  }
+  .freq-bar {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+  }
+  .freq-bar::after {
+    content: '';
+    position: absolute; right: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 0 1px 1px 0;
+  }
+  .freq-count {
+    width: 40px; color: var(--green-dim); font-size: 0.6rem;
+    text-align: right;
+  }
+
+  /* Protocol pie */
+  .proto-stats {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .proto-stat-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.68rem;
+  }
+  .proto-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .proto-name { flex: 1; }
+  .proto-pct { color: var(--green-dim); font-size: 0.62rem; }
+  .proto-minibar {
+    width: 60px; height: 4px;
+    background: rgba(0,255,136,0.08);
+    border-radius: 2px; overflow: hidden;
+  }
+  .proto-minibar-fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* Canvas for graph */
+  .network-graph {
+    width: 100%; height: 120px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    background: rgba(0,0,0,0.3);
+  }
+  canvas.graph-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+  }
+
+  /* Entropy meter */
+  .entropy-wrap {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .entropy-bar-outer {
+    height: 16px;
+    background: rgba(0,255,136,0.06);
+    border: 1px solid var(--border);
+    border-radius: 2px; overflow: hidden;
+    position: relative;
+  }
+  .entropy-bar-inner {
+    height: 100%;
+    transition: width 0.6s ease, background 0.6s ease;
+    position: relative;
+  }
+  .entropy-label {
+    font-size: 0.62rem; color: var(--green-dim);
+    display: flex; justify-content: space-between;
+  }
+
+  /* Alerts */
+  .alert-list {
+    display: flex; flex-direction: column; gap: 4px;
+    max-height: 100px; overflow-y: auto;
+  }
+  .alert-item {
+    font-size: 0.64rem; padding: 4px 8px;
+    border-left: 2px solid var(--red);
+    background: rgba(255,51,102,0.06);
+    color: var(--red);
+    animation: alertIn 0.3s ease;
+  }
+  @keyframes alertIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; }
+  }
+  .alert-item.warn {
+    border-color: var(--yellow);
+    background: rgba(255,204,0,0.06);
+    color: var(--yellow);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
+
+  .counter {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: var(--green);
+  }
+
+  .no-select { user-select: none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">NET<span>SNIFF</span></div>
+  <div class="badge sys">SYS:ONLINE</div>
+  <div class="badge live" id="livebadge">● CAPTURE</div>
+  <div class="status-bar">
+    <span class="stat">PAQUETS: <strong id="pkt-count">0</strong></span>
+    <span class="stat">OCTETS: <strong id="byte-count">0</strong></span>
+    <span class="stat">PERTE: <strong id="drop-count" style="color:var(--red)">0%</strong></span>
+    <span class="stat">IFACE: <strong>eth0</strong></span>
+    <span class="stat" id="clock">--:--:--</span>
+  </div>
+</header>
+
+<div class="workspace">
+  <div class="controls no-select">
+    <button class="btn active" id="btn-start" onclick="toggleCapture()">⏹ STOP</button>
+    <button class="btn danger" onclick="clearFeed()">✕ CLEAR</button>
+    <input class="filter-input" type="text" id="filter" placeholder="Filtre: ip, port, proto..." oninput="applyFilter()">
+    <div class="speed-control">
+      <span>VITESSE:</span>
+      <input type="range" min="1" max="10" value="5" id="speed" oninput="updateSpeed(this.value)">
+      <span id="speed-val">5</span>
+    </div>
+    <span style="margin-left:auto; font-size:0.7rem; color:var(--green-dim)">
+      INTERFACE SIMULÉE — <span style="color:var(--yellow)">DEMO MODE</span>
+    </span>
+  </div>
+
+  <div class="packet-feed" id="feed">
+    <div class="feed-header no-select">
+      <span>#</span>
+      <span>TEMPS</span>
+      <span>SOURCE</span>
+      <span>DEST</span>
+      <span>PROTO</span>
+      <span>TAILLE</span>
+      <span>INFO</span>
+    </div>
+    <!-- packets injected here -->
+  </div>
+
+  <div class="right-panel">
+    <div class="detail-panel">
+      <div class="panel-title">Détail Paquet</div>
+      <div class="hex-view" id="hex-view">
+        <span style="color:var(--green-dim);font-size:0.65rem">
+          ← Cliquer sur un paquet pour inspecter
+        </span>
+      </div>
+    </div>
+
+    <div class="freq-panel">
+      <div class="panel-title">Analyse de Fréquence</div>
+
+      <div>
+        <div class="panel-title" style="font-size:0.6rem; margin-bottom:6px;">Trafic / sec (30s)</div>
+        <div class="network-graph">
+          <canvas class="graph-canvas" id="traffic-graph"></canvas>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel-title" style="font-size:0.6rem; margin-bottom:6px;">Distribution Protocoles</div>
+        <div class="proto-stats" id="proto-stats"></div>
+      </div>
+
+      <div>
+        <div class="panel-title" style="font-size:0.6rem; margin-bottom:6px;">Fréquence Ports Dest.</div>
+        <div class="freq-chart" id="port-freq"></div>
+      </div>
+
+      <div>
+        <div class="panel-title" style="font-size:0.6rem; margin-bottom:6px;">Entropie Payload</div>
+        <div class="entropy-wrap">
+          <div class="entropy-bar-outer">
+            <div class="entropy-bar-inner" id="entropy-bar" style="width:0%"></div>
+          </div>
+          <div class="entropy-label">
+            <span>LOW</span>
+            <span id="entropy-val">— bits/byte</span>
+            <span>HIGH (8.0)</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel-title" style="font-size:0.6rem; margin-bottom:6px;">⚠ Alertes</div>
+        <div class="alert-list" id="alert-list">
+          <div style="font-size:0.64rem; color:var(--green-dim)">Aucune anomalie détectée...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA & STATE
+// ═══════════════════════════════════════════════════════
+let running = true;
+let packets = [];
+let packetId = 0;
+let byteTotal = 0;
+let intervalId = null;
+let speedMs = 400;
+let filterText = '';
+let selectedPkt = null;
+let protoCount = { TCP:0, UDP:0, HTTP:0, DNS:0, ICMP:0, ARP:0, TLS:0 };
+let portCount = {};
+let trafficHistory = new Array(30).fill(0);
+let currentSecPkts = 0;
+let secondTimer = 0;
+let entropyHistory = [];
+let alerts = [];
+
+const PROTOS = ['TCP','UDP','HTTP','DNS','ICMP','ARP','TLS'];
+const PROTO_COLORS = {
+  TCP:'#00ccff', UDP:'#ffcc00', HTTP:'#00ff88',
+  DNS:'#cc44ff', ICMP:'#ff3366', ARP:'#ff8800', TLS:'#88ffcc'
+};
+
+const SERVICES = {
+  80:'HTTP', 443:'HTTPS/TLS', 53:'DNS', 22:'SSH',
+  21:'FTP', 25:'SMTP', 110:'POP3', 3306:'MySQL',
+  8080:'HTTP-ALT', 3389:'RDP', 5432:'PgSQL', 6379:'Redis'
+};
+
+const SUSPICIOUS_PORTS = [4444, 1337, 31337, 6666, 9001, 9030];
+const KNOWN_SCANNERS = ['192.168.1.1', '10.0.0.1'];
+
+function randIP() {
+  const pools = [
+    () => `192.168.${ri(0,5)}.${ri(1,254)}`,
+    () => `10.0.${ri(0,3)}.${ri(1,200)}`,
+    () => `172.16.${ri(0,15)}.${ri(1,200)}`,
+    () => `${ri(1,223)}.${ri(0,255)}.${ri(0,255)}.${ri(1,254)}`
+  ];
+  return pools[ri(0, pools.length-1)]();
+}
+function ri(a,b) { return Math.floor(Math.random()*(b-a+1))+a; }
+function rf(a,b) { return (Math.random()*(b-a)+a).toFixed(4); }
+function ts() { return new Date().toLocaleTimeString('fr-FR',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'})+'.'+String(ri(0,999)).padStart(3,'0'); }
+
+function genPacket() {
+  const proto = PROTOS[ri(0,PROTOS.length-1)];
+  const src = randIP();
+  const dst = randIP();
+  const portList = Object.keys(SERVICES).map(Number);
+  const dport = Math.random()<0.75 ? portList[ri(0,portList.length-1)] : ri(1024,65535);
+  const sport = ri(1024,65535);
+  const size = proto==='ICMP' ? ri(28,84) : ri(40,1500);
+  const svc = SERVICES[dport] || '';
+  const flags = proto==='TCP' ? ['SYN','ACK','PSH','FIN','RST'][ri(0,4)] : '';
+  const ttl = ri(32,128);
+
+  // Anomalies
+  const suspicious = SUSPICIOUS_PORTS.includes(dport) || (proto==='TCP' && flags==='RST' && Math.random()<0.05);
+
+  let info = '';
+  if(proto==='HTTP') info = `GET /api/${['users','data','admin','login'][ri(0,3)]} HTTP/1.1`;
+  else if(proto==='DNS') info = `Query: ${['google.com','github.com','malware-c2.xyz','api.service.io'][ri(0,3)]}`;
+  else if(proto==='TLS') info = `TLSv1.${ri(2,3)} ${['ClientHello','ServerHello','ChangeCipherSpec','ApplicationData'][ri(0,3)]}`;
+  else if(proto==='ARP') info = `Who has ${dst}? Tell ${src}`;
+  else if(proto==='ICMP') info = `Echo ${['Request','Reply'][ri(0,1)]} id=${ri(1,9999)}`;
+  else info = `${sport} → ${dport}${flags?' ['+flags+']':''} ${svc?'('+svc+')':''}`;
+
+  // Entropy simulation (0-8 bits)
+  const entropy = proto==='TLS' ? ri(72,80)/10 : proto==='DNS' ? ri(30,55)/10 : ri(20,65)/10;
+
+  return { id:++packetId, time:ts(), src, dst, sport, dport, proto, size, info, suspicious, flags, ttl, entropy };
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function renderPacket(p) {
+  const feed = document.getElementById('feed');
+  const div = document.createElement('div');
+  div.className = `packet proto-${p.proto}${p.suspicious?' sus':''}`;
+  div.dataset.id = p.id;
+  div.innerHTML = `
+    <span style="color:var(--green-dim)">${p.id}</span>
+    <span style="color:var(--green-dim);font-size:0.6rem">${p.time.slice(0,8)}</span>
+    <span>${p.src}</span>
+    <span>${p.dst}</span>
+    <span class="proto-${p.proto}">${p.proto}</span>
+    <span>${p.size}B</span>
+    <span style="color:var(--green-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.info}</span>
+  `;
+  if(p.suspicious) div.style.background = 'rgba(255,51,102,0.06)';
+  div.onclick = () => selectPacket(p, div);
+
+  // Filter
+  if(filterText) {
+    const hay = (p.src+p.dst+p.proto+p.info+p.dport).toLowerCase();
+    if(!hay.includes(filterText)) { div.style.display='none'; }
+  }
+
+  feed.appendChild(div);
+  if(!selectedPkt) feed.scrollTop = feed.scrollHeight;
+}
+
+function selectPacket(p, el) {
+  document.querySelectorAll('.packet').forEach(d=>d.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPkt = p;
+  renderHex(p);
+}
+
+function renderHex(p) {
+  const hex = document.getElementById('hex-view');
+  // Generate fake hex dump
+  const bytes = [];
+  for(let i=0;i<Math.min(p.size,64);i++) bytes.push(ri(0,255));
+
+  let html = `<div style="color:var(--cyan);margin-bottom:4px"># Paquet #${p.id} — ${p.proto} — ${p.size} octets — TTL:${p.ttl}</div>`;
+  html += `<div style="color:var(--green-dim);font-size:0.6rem;margin-bottom:6px">`;
+  html += `SRC: ${p.src}:${p.sport} → DST: ${p.dst}:${p.dport}</div>`;
+
+  for(let i=0;i<bytes.length;i+=16) {
+    const row = bytes.slice(i,i+16);
+    const offset = String(i).padStart(4,'0');
+    const hexPart = row.map(b=>b.toString(16).padStart(2,'0')).join(' ');
+    const asciiPart = row.map(b=>(b>=32&&b<127)?String.fromCharCode(b):'.').join('');
+    html += `<span style="color:var(--green-dim)">${offset}</span>  `;
+    html += `<span class="hex-byte">${hexPart.padEnd(47,' ')}</span>  `;
+    html += `<span class="hex-ascii">${asciiPart}</span><br>`;
+  }
+  hex.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+// FREQUENCY ANALYSIS
+// ═══════════════════════════════════════════════════════
+function updateStats(p) {
+  protoCount[p.proto] = (protoCount[p.proto]||0) + 1;
+  portCount[p.dport] = (portCount[p.dport]||0) + 1;
+  byteTotal += p.size;
+  currentSecPkts++;
+  entropyHistory.push(p.entropy);
+  if(entropyHistory.length > 50) entropyHistory.shift();
+
+  // Alerts
+  if(SUSPICIOUS_PORTS.includes(p.dport)) {
+    addAlert(`Port suspect ${p.dport} détecté: ${p.src} → ${p.dst}`, 'danger');
+  }
+  if(p.proto==='DNS' && p.info.includes('.xyz')) {
+    addAlert(`Domaine potentiellement malveillant: ${p.info}`, 'warn');
+  }
+  if(p.entropy > 7.5) {
+    addAlert(`Entropie élevée (${p.entropy.toFixed(1)} bits) — possible chiffrement/tunnel`, 'warn');
+  }
+}
+
+function addAlert(msg, type='danger') {
+  if(alerts.length > 0 && alerts[alerts.length-1].msg === msg) return;
+  alerts.push({msg,type});
+  if(alerts.length > 8) alerts.shift();
+  const list = document.getElementById('alert-list');
+  list.innerHTML = alerts.slice().reverse().map(a=>`
+    <div class="alert-item ${a.type==='warn'?'warn':''}">
+      ${a.type==='danger'?'⚠':'◈'} ${a.msg}
+    </div>
+  `).join('');
+}
+
+function renderProtoStats() {
+  const total = Object.values(protoCount).reduce((a,b)=>a+b,0) || 1;
+  const sorted = PROTOS.map(p=>({p, c:protoCount[p]||0})).sort((a,b)=>b.c-a.c);
+  document.getElementById('proto-stats').innerHTML = sorted.map(({p,c})=>`
+    <div class="proto-stat-row">
+      <div class="proto-dot" style="background:${PROTO_COLORS[p]}"></div>
+      <span class="proto-name proto-${p}">${p}</span>
+      <div class="proto-minibar">
+        <div class="proto-minibar-fill" style="width:${(c/total*100).toFixed(1)}%;background:${PROTO_COLORS[p]}"></div>
+      </div>
+      <span class="proto-pct">${(c/total*100).toFixed(1)}%</span>
+      <span style="font-size:0.6rem;color:var(--green-dim);margin-left:4px">(${c})</span>
+    </div>
+  `).join('');
+}
+
+function renderPortFreq() {
+  const top = Object.entries(portCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxVal = top[0]?.[1] || 1;
+  const barColors = ['#00ff88','#00ccff','#cc44ff','#ffcc00','#ff8800','#88ffcc','#ff3366','#aaffbb'];
+
+  document.getElementById('port-freq').innerHTML = top.map(([port,cnt],i)=>`
+    <div class="freq-row">
+      <span class="freq-label">${port}</span>
+      <div class="freq-bar-wrap">
+        <div class="freq-bar" style="width:${(cnt/maxVal*100).toFixed(1)}%;background:${barColors[i%barColors.length]}"></div>
+      </div>
+      <span class="freq-count">${cnt}</span>
+    </div>
+  `).join('');
+}
+
+function renderEntropy() {
+  if(!entropyHistory.length) return;
+  const avg = entropyHistory.reduce((a,b)=>a+b,0)/entropyHistory.length;
+  const pct = (avg/8*100).toFixed(1);
+  const bar = document.getElementById('entropy-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = avg > 7 ? '#ff3366' : avg > 5 ? '#ffcc00' : '#00ff88';
+  document.getElementById('entropy-val').textContent = avg.toFixed(2) + ' bits/byte';
+}
+
+// ═══════════════════════════════════════════════════════
+// TRAFFIC GRAPH
+// ═══════════════════════════════════════════════════════
+function drawGraph() {
+  const canvas = document.getElementById('traffic-graph');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth; const H = canvas.offsetHeight;
+  canvas.width = W; canvas.height = H;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(0,255,136,0.08)';
+  ctx.lineWidth = 1;
+  for(let y=0;y<H;y+=20) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  const max = Math.max(...trafficHistory,1);
+  const step = W/30;
+
+  // Fill
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  trafficHistory.forEach((v,i)=>{
+    const x = i*step; const y = H - (v/max)*(H-8);
+    if(i===0) ctx.lineTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.lineTo(W,H); ctx.closePath();
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(0,255,136,0.3)');
+  grad.addColorStop(1,'rgba(0,255,136,0.02)');
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 1.5;
+  trafficHistory.forEach((v,i)=>{
+    const x = i*step; const y = H - (v/max)*(H-8);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Glow dot at end
+  const lastX = 29*step;
+  const lastY = H-(trafficHistory[29]/max)*(H-8);
+  ctx.beginPath();
+  ctx.arc(lastX,lastY,3,0,Math.PI*2);
+  ctx.fillStyle = '#00ff88';
+  ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+// ═══════════════════════════════════════════════════════
+// CLOCK & COUNTERS
+// ═══════════════════════════════════════════════════════
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR',{hour12:false});
+  document.getElementById('pkt-count').textContent = packetId.toLocaleString();
+  document.getElementById('byte-count').textContent = byteTotal>1048576 ? (byteTotal/1048576).toFixed(1)+'MB' : byteTotal>1024 ? (byteTotal/1024).toFixed(1)+'KB' : byteTotal+'B';
+}
+
+// ═══════════════════════════════════════════════════════
+// MAIN LOOP
+// ═══════════════════════════════════════════════════════
+function tick() {
+  const count = ri(1,3);
+  for(let i=0;i<count;i++) {
+    const p = genPacket();
+    packets.push(p);
+    renderPacket(p);
+    updateStats(p);
+    if(packets.length > 500) {
+      packets.shift();
+      const feed = document.getElementById('feed');
+      const rows = feed.querySelectorAll('.packet');
+      if(rows.length > 500) feed.removeChild(rows[0]);
+    }
+  }
+  renderProtoStats();
+  renderPortFreq();
+  renderEntropy();
+  updateClock();
+}
+
+// Per-second stats
+setInterval(()=>{
+  trafficHistory.push(currentSecPkts);
+  if(trafficHistory.length>30) trafficHistory.shift();
+  currentSecPkts = 0;
+  drawGraph();
+}, 1000);
+
+// ═══════════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════════
+function toggleCapture() {
+  running = !running;
+  const btn = document.getElementById('btn-start');
+  const badge = document.getElementById('livebage');
+  if(running) {
+    btn.textContent = '⏹ STOP';
+    btn.classList.add('active');
+    document.getElementById('livebage').textContent = '● CAPTURE';
+    startLoop();
+  } else {
+    btn.textContent = '▶ START';
+    btn.classList.remove('active');
+    clearInterval(intervalId);
+  }
+}
+
+function startLoop() {
+  clearInterval(intervalId);
+  intervalId = setInterval(tick, speedMs);
+}
+
+function clearFeed() {
+  packets = []; packetId = 0; byteTotal = 0;
+  protoCount = { TCP:0,UDP:0,HTTP:0,DNS:0,ICMP:0,ARP:0,TLS:0 };
+  portCount = {}; trafficHistory = new Array(30).fill(0);
+  entropyHistory = []; alerts = []; selectedPkt = null;
+  const feed = document.getElementById('feed');
+  while(feed.children.length > 1) feed.removeChild(feed.lastChild);
+  document.getElementById('hex-view').innerHTML = '<span style="color:var(--green-dim);font-size:0.65rem">← Cliquer sur un paquet pour inspecter</span>';
+  document.getElementById('alert-list').innerHTML = '<div style="font-size:0.64rem; color:var(--green-dim)">Aucune anomalie détectée...</div>';
+  renderProtoStats(); renderPortFreq(); renderEntropy(); updateClock();
+}
+
+function applyFilter() {
+  filterText = document.getElementById('filter').value.toLowerCase();
+  document.querySelectorAll('.packet').forEach(div=>{
+    if(!filterText) { div.style.display=''; return; }
+    const id = parseInt(div.dataset.id);
+    const p = packets.find(x=>x.id===id);
+    if(!p) return;
+    const hay = (p.src+p.dst+p.proto+p.info+p.dport).toLowerCase();
+    div.style.display = hay.includes(filterText) ? '' : 'none';
+  });
+}
+
+function updateSpeed(v) {
+  document.getElementById('speed-val').textContent = v;
+  speedMs = Math.round(1000 / v);
+  if(running) startLoop();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+startLoop();
+drawGraph();
+renderProtoStats();
+</script>
+</body>
+</html>

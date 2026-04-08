@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fiches Révision — Cybersécurité & Code du Numérique Bénin</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f3; color: #1a1a18; padding: 1.5rem; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 1.5rem; color: #1a1a18; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .tab { padding: 8px 16px; border-radius: 8px; border: 0.5px solid #c0bfb8; font-size: 14px; cursor: pointer; background: #fff; color: #5f5e5a; transition: all 0.15s; }
+  .tab.active { background: #e6f1fb; color: #185fa5; border-color: #378add; font-weight: 500; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 12px; }
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 8px; font-weight: 500; white-space: nowrap; }
+  .badge-blue { background: #e6f1fb; color: #185fa5; }
+  .badge-green { background: #eaf3de; color: #3b6d11; }
+  .badge-amber { background: #faeeda; color: #854f0b; }
+  .badge-red { background: #fcebeb; color: #a32d2d; }
+  .cmd { font-family: monospace; font-size: 13px; background: #f1efe8; padding: 6px 10px; border-radius: 8px; color: #1a1a18; display: block; margin: 8px 0; word-break: break-all; }
+  .desc { font-size: 14px; color: #5f5e5a; line-height: 1.6; }
+  .title { font-size: 15px; font-weight: 500; color: #1a1a18; }
+  .article { font-size: 13px; font-weight: 500; color: #888780; }
+  .group-title { font-size: 13px; font-weight: 500; color: #888780; text-transform: uppercase; letter-spacing: 0.05em; margin: 1.5rem 0 0.75rem; }
+  .flip-card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; cursor: pointer; }
+  .flip-card .question { font-size: 14px; font-weight: 500; color: #1a1a18; }
+  .flip-card .answer { font-size: 14px; color: #5f5e5a; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid #d3d1c7; display: none; line-height: 1.6; }
+  .flip-card.open .answer { display: block; }
+  .flip-hint { font-size: 12px; color: #b4b2a9; margin-top: 4px; }
+  .search-bar { width: 100%; margin-bottom: 1rem; font-size: 14px; padding: 8px 12px; border-radius: 8px; border: 0.5px solid #c0bfb8; background: #fff; color: #1a1a18; }
+  .search-bar:focus { outline: none; border-color: #378add; }
+</style>
+</head>
+<body>
+<h1>Fiches de révision — Cybersécurité & Code du Numérique Bénin</h1>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('volatility', event)">Commandes Volatility</button>
+  <button class="tab" onclick="switchTab('lois', event)">Code du Numérique — Bénin</button>
+  <button class="tab" onclick="switchTab('quiz', event)">Quiz rapide</button>
+</div>
+
+<div id="volatility" class="section active">
+  <input class="search-bar" type="text" placeholder="Rechercher une commande..." oninput="filterCards(this.value)" />
+
+  <div class="group-title">Informations système</div>
+  <div class="card" data-tags="imageinfo kdbgscan systeme">
+    <div class="card-header"><span class="title">imageinfo / kdbgscan</span><span class="badge badge-blue">Identification</span></div>
+    <code class="cmd">vol.py -f dump.mem imageinfo</code>
+    <p class="desc">Identifie le profil du système (OS, version, architecture). Toujours la <strong>première commande</strong> à lancer sur un dump.</p>
+  </div>
+  <div class="card" data-tags="hivelist registre hive">
+    <div class="card-header"><span class="title">hivelist</span><span class="badge badge-blue">Registre</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 hivelist</code>
+    <p class="desc">Liste les ruches (hives) du registre Windows chargées en mémoire (SAM, SYSTEM, SOFTWARE…).</p>
+  </div>
+  <div class="card" data-tags="printkey registre cle">
+    <div class="card-header"><span class="title">printkey</span><span class="badge badge-blue">Registre</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 printkey -K "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"</code>
+    <p class="desc">Affiche le contenu d'une clé de registre spécifique. Utile pour détecter la persistance de malwares.</p>
+  </div>
+
+  <div class="group-title">Processus</div>
+  <div class="card" data-tags="pslist pstree processus liste">
+    <div class="card-header"><span class="title">pslist</span><span class="badge badge-green">Processus</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 pslist</code>
+    <p class="desc">Liste les processus actifs. Affiche PID, PPID, nom, heure de démarrage. Peut être trompé par les rootkits (ne montre que la liste chaînée officielle).</p>
+  </div>
+  <div class="card" data-tags="psscan processus scan caché">
+    <div class="card-header"><span class="title">psscan</span><span class="badge badge-green">Processus</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 psscan</code>
+    <p class="desc">Scanne la mémoire physique pour trouver les structures EPROCESS. <strong>Détecte les processus cachés</strong> que pslist ne voit pas.</p>
+  </div>
+  <div class="card" data-tags="pstree arbre parent enfant">
+    <div class="card-header"><span class="title">pstree</span><span class="badge badge-green">Processus</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 pstree</code>
+    <p class="desc">Affiche les processus sous forme d'arbre parent-enfant. Pratique pour détecter des processus malveillants se faisant passer pour des processus légitimes.</p>
+  </div>
+  <div class="card" data-tags="cmdline ligne commande arguments">
+    <div class="card-header"><span class="title">cmdline</span><span class="badge badge-green">Processus</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 cmdline</code>
+    <p class="desc">Affiche la ligne de commande utilisée pour lancer chaque processus. Révèle les arguments suspects.</p>
+  </div>
+  <div class="card" data-tags="procdump dump extraction exe">
+    <div class="card-header"><span class="title">procdump</span><span class="badge badge-amber">Extraction</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 procdump -p 1234 --dump-dir /output/</code>
+    <p class="desc">Extrait l'exécutable d'un processus donné (par PID) depuis la mémoire vers le disque pour analyse.</p>
+  </div>
+
+  <div class="group-title">Réseau</div>
+  <div class="card" data-tags="netscan connexion reseau ip port">
+    <div class="card-header"><span class="title">netscan</span><span class="badge badge-red">Réseau</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 netscan</code>
+    <p class="desc">Affiche toutes les connexions réseau (TCP/UDP), actives ou fermées, avec IP locale/distante et PID associé.</p>
+  </div>
+  <div class="card" data-tags="connections connexions actives xp">
+    <div class="card-header"><span class="title">connections / connscan</span><span class="badge badge-red">Réseau</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=WinXPSP2x86 connections</code>
+    <p class="desc">Pour Windows XP uniquement. Liste les connexions TCP actives. <code>connscan</code> scanne aussi les connexions terminées.</p>
+  </div>
+
+  <div class="group-title">Mémoire & Fichiers</div>
+  <div class="card" data-tags="malfind injection code malware">
+    <div class="card-header"><span class="title">malfind</span><span class="badge badge-red">Détection malware</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 malfind</code>
+    <p class="desc"><strong>Plugin phare</strong> pour détecter les injections de code (shellcode, DLL injection). Recherche les zones mémoire avec des permissions RWX et du contenu PE.</p>
+  </div>
+  <div class="card" data-tags="memdump memoire dump extraction processus">
+    <div class="card-header"><span class="title">memdump</span><span class="badge badge-amber">Extraction</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 memdump -p 1234 --dump-dir /output/</code>
+    <p class="desc">Extrait l'espace mémoire complet d'un processus. Utile pour récupérer des artefacts (clés, mots de passe, données chiffrées).</p>
+  </div>
+  <div class="card" data-tags="filescan fichiers mft ntfs">
+    <div class="card-header"><span class="title">filescan</span><span class="badge badge-amber">Fichiers</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 filescan</code>
+    <p class="desc">Scanne les objets FILE_OBJECT en mémoire. Permet de lister tous les fichiers ouverts au moment du dump, même supprimés.</p>
+  </div>
+  <div class="card" data-tags="dumpfiles extraire fichier">
+    <div class="card-header"><span class="title">dumpfiles</span><span class="badge badge-amber">Fichiers</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 dumpfiles -Q 0xaddr --dump-dir /output/</code>
+    <p class="desc">Extrait un fichier depuis la mémoire à partir de son adresse (obtenue avec filescan).</p>
+  </div>
+
+  <div class="group-title">Utilisateurs & Authentification</div>
+  <div class="card" data-tags="hashdump hash ntlm mot de passe sam">
+    <div class="card-header"><span class="title">hashdump</span><span class="badge badge-red">Credentials</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 hashdump</code>
+    <p class="desc">Extrait les hashes NTLM des comptes utilisateurs depuis les ruches SAM et SYSTEM. Utilisé pour des attaques pass-the-hash.</p>
+  </div>
+  <div class="card" data-tags="lsadump lsa secrets">
+    <div class="card-header"><span class="title">lsadump</span><span class="badge badge-red">Credentials</span></div>
+    <code class="cmd">vol.py -f dump.mem --profile=Win7SP1x64 lsadump</code>
+    <p class="desc">Extrait les secrets LSA (mots de passe de services, comptes de domaine, clés de chiffrement).</p>
+  </div>
+</div>
+
+<div id="lois" class="section">
+  <div class="card">
+    <div class="card-header"><span class="title">Loi n° 2017-20 — Code du Numérique</span><span class="badge badge-blue">Texte fondateur</span></div>
+    <p class="desc">Adoptée le <strong>20 avril 2018</strong> au Bénin. Régit les transactions électroniques, la protection des données personnelles, la cybersécurité, la signature électronique et les services de communication électronique.</p>
+  </div>
+
+  <div class="group-title">Protection des données personnelles</div>
+  <div class="card">
+    <div class="card-header"><span class="article">Art. 536–570</span><span class="badge badge-green">Données personnelles</span></div>
+    <p class="title" style="margin-bottom:6px">Principe du consentement éclairé</p>
+    <p class="desc">Toute collecte de données personnelles requiert le consentement <strong>libre, exprès et éclairé</strong> de la personne concernée. Les données doivent être collectées pour des finalités déterminées, explicites et légitimes.</p>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="article">Art. 552</span><span class="badge badge-green">Données personnelles</span></div>
+    <p class="title" style="margin-bottom:6px">Droit d'accès et de rectification</p>
+    <p class="desc">Toute personne a le droit d'accéder à ses données personnelles détenues par un organisme et d'en demander la rectification ou la suppression.</p>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="article">Art. 558–560</span><span class="badge badge-green">Données personnelles</span></div>
+    <p class="title" style="margin-bottom:6px">Transfert de données hors Bénin</p>
+    <p class="desc">Interdit sauf si le pays destinataire assure un niveau de protection adéquat ou si la personne concernée a donné son accord.</p>
+  </div>
+
+  <div class="group-title">Cybercriminalité & Infractions</div>
+  <div class="card">
+    <div class="card-header"><span class="article">Art. 551–600</span><span class="badge badge-red">Cybercriminalité</span></div>
+    <p class="title" style="margin-bottom:6px">Accès frauduleux à un système (STAD)</p>
+    <p class="desc">Tout accès ou maintien frauduleux dans un système de traitement automatisé de données (STAD) est puni de <strong>6 mois à 2 ans d'emprisonnement</strong> et/ou d'une amende de 500 000 à 2 000 000 FCFA.</p>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="article">Code du Numérique</span><span class="badge badge-red">Cybercriminalité</span></div>
+    <p class="title" style="margin-bottom:6px">Atteinte à l'intégrité des données</p>
+    <p class="desc">Toute introduction, modification, suppression ou altération frauduleuse de données est sanctionnée. Peines aggravées si l'infraction cible des systèmes de l'État ou des infrastructures critiques.</p>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="article">Code du Numérique</span><span class="badge badge-red">Cybercriminalité</span></div>
+    <p class="title" style="margin-bottom:6px">Interception illicite</p>
+    <p class="desc">L'interception non autorisée de communications électroniques est une infraction pénale. Elle est distincte de l'écoute légale autorisée par un juge.</p>
+  </div>
+
+  <div class="group-title">Transactions & Commerce électronique</div>
+  <div class="card">
+    <div class="card-header"><span class="article">Art. 236–280</span><span class="badge badge-amber">Commerce élec.</span></div>
+    <p class="title" style="margin-bottom:6px">Signature électronique</p>
+    <p class="desc">La signature électronique a la même valeur juridique que la signature manuscrite à condition d'être <strong>fiable, sécurisée et certifiée</strong> par un prestataire de services de certification accrédité.</p>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="article">Art. 281–320</span><span class="badge badge-amber">Commerce élec.</span></div>
+    <p class="title" style="margin-bottom:6px">Contrat électronique</p>
+    <p class="desc">Un contrat conclu par voie électronique a pleine valeur légale. L'offre et l'acceptation peuvent être échangées par courrier électronique ou formulaire en ligne.</p>
+  </div>
+
+  <div class="group-title">Institutions clés</div>
+  <div class="card">
+    <div class="card-header"><span class="title">APDP</span><span class="badge badge-blue">Institution</span></div>
+    <p class="desc"><strong>Autorité de Protection des Données Personnelles</strong> — organisme indépendant chargé de veiller à l'application des règles de protection des données personnelles au Bénin. Créé par le Code du Numérique.</p>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="title">ARCEP Bénin</span><span class="badge badge-blue">Institution</span></div>
+    <p class="desc"><strong>Autorité de Régulation des Communications Électroniques et de la Poste</strong> — régule les opérateurs télécom et internet, délivre les licences, contrôle la qualité de service.</p>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="title">CERT Bénin</span><span class="badge badge-blue">Institution</span></div>
+    <p class="desc">Équipe nationale de réponse aux incidents de cybersécurité. Chargée de coordonner la réponse aux cyberattaques affectant les infrastructures béninoises.</p>
+  </div>
+</div>
+
+<div id="quiz" class="section">
+  <p style="font-size:13px; color:#888780; margin-bottom:1rem;">Clique sur une question pour voir la réponse.</p>
+
+  <div class="flip-card" onclick="this.classList.toggle('open')">
+    <div class="question">Quelle est la première commande à lancer lors de l'analyse d'un dump mémoire avec Volatility ?</div>
+    <p class="flip-hint">Clique pour voir la réponse</p>
+    <div class="answer"><strong>imageinfo</strong> — elle identifie le profil système (OS, version, architecture) nécessaire pour toutes les commandes suivantes.</div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('open')">
+    <div class="question">Quelle est la différence entre pslist et psscan ?</div>
+    <p class="flip-hint">Clique pour voir la réponse</p>
+    <div class="answer"><strong>pslist</strong> parcourt la liste chaînée officielle des processus — un rootkit peut s'y cacher. <strong>psscan</strong> scanne directement la mémoire physique pour trouver les structures EPROCESS, détectant ainsi les processus masqués.</div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('open')">
+    <div class="question">Quel plugin Volatility est utilisé pour détecter les injections de code malveillant ?</div>
+    <p class="flip-hint">Clique pour voir la réponse</p>
+    <div class="answer"><strong>malfind</strong> — il recherche les zones mémoire avec des permissions RWX (lecture-écriture-exécution) contenant des signatures PE suspectes.</div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('open')">
+    <div class="question">Quelle est l'année d'adoption du Code du Numérique du Bénin ?</div>
+    <p class="flip-hint">Clique pour voir la réponse</p>
+    <div class="answer">Le Code du Numérique (Loi n° 2017-20) a été adopté et promulgué en <strong>2018</strong> (20 avril 2018).</div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('open')">
+    <div class="question">Quelle institution béninoise est chargée de la protection des données personnelles ?</div>
+    <p class="flip-hint">Clique pour voir la réponse</p>
+    <div class="answer"><strong>L'APDP</strong> — Autorité de Protection des Données Personnelles, créée par le Code du Numérique.</div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('open')">
+    <div class="question">Quelle peine est prévue pour un accès frauduleux à un STAD au Bénin ?</div>
+    <p class="flip-hint">Clique pour voir la réponse</p>
+    <div class="answer"><strong>6 mois à 2 ans d'emprisonnement</strong> et/ou une amende de <strong>500 000 à 2 000 000 FCFA</strong> selon le Code du Numérique.</div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('open')">
+    <div class="question">Que fait la commande hashdump dans Volatility ?</div>
+    <p class="flip-hint">Clique pour voir la réponse</p>
+    <div class="answer">Elle extrait les <strong>hashes NTLM</strong> des comptes utilisateurs Windows depuis les ruches SAM et SYSTEM en mémoire. Ces hashes peuvent ensuite être crackés ou utilisés dans une attaque pass-the-hash.</div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('open')">
+    <div class="question">Qu'est-ce que netscan affiche dans Volatility ?</div>
+    <p class="flip-hint">Clique pour voir la réponse</p>
+    <div class="answer">Toutes les <strong>connexions réseau TCP/UDP</strong> (actives et terminées) avec les adresses IP locales/distantes, les ports et le PID du processus associé.</div>
+  </div>
+  <div class="flip-card" onclick="this.classList.toggle('open')">
+    <div class="question">La signature électronique a-t-elle une valeur légale au Bénin ?</div>
+    <p class="flip-hint">Clique pour voir la réponse</p>
+    <div class="answer"><strong>Oui</strong> — le Code du Numérique (art. 236–280) lui confère la même valeur qu'une signature manuscrite, à condition qu'elle soit fiable, sécurisée et certifiée par un prestataire accrédité.</div>
+  </div>
+</div>
+
+<script>
+function switchTab(id, event) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+function filterCards(val) {
+  const v = val.toLowerCase();
+  document.querySelectorAll('#volatility .card').forEach(card => {
+    const tags = (card.dataset.tags || '') + card.innerText.toLowerCase();
+    card.style.display = tags.includes(v) ? '' : 'none';
+  });
+  document.querySelectorAll('#volatility .group-title').forEach(gt => {
+    let next = gt.nextElementSibling;
+    let visible = false;
+    while (next && !next.classList.contains('group-title')) {
+      if (next.style.display !== 'none') visible = true;
+      next = next.nextElementSibling;
+    }
+    gt.style.display = visible ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

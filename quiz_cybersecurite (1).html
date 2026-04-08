@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Cybersécurité & Réseaux — Génie en Herbe</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #efefec;
+    --text: #1a1a1a;
+    --text2: #5a5a5a;
+    --text3: #999;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --green: #1D9E75;
+    --green-bg: #EAF3DE;
+    --green-text: #3B6D11;
+    --red: #E24B4A;
+    --red-bg: #FCEBEB;
+    --red-text: #A32D2D;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+    --coral-bg: #FAECE7;
+    --coral-text: #712B13;
+    --teal-bg: #E1F5EE;
+    --teal-text: #085041;
+    --purple-bg: #EEEDFE;
+    --purple-text: #3C3489;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --gray-bg: #F1EFE8;
+    --gray-text: #5F5E5A;
+    --pink-bg: #FBEAF0;
+    --pink-text: #72243E;
+    --green2-bg: #EAF3DE;
+    --green2-text: #27500A;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c;
+      --bg2: #2a2a28;
+      --bg3: #333330;
+      --text: #f0f0ee;
+      --text2: #aaa;
+      --text3: #666;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+      --green-bg: #173404;
+      --green-text: #C0DD97;
+      --red-bg: #501313;
+      --red-text: #F7C1C1;
+      --blue-bg: #042C53;
+      --blue-text: #B5D4F4;
+      --coral-bg: #4A1B0C;
+      --coral-text: #F5C4B3;
+      --teal-bg: #04342C;
+      --teal-text: #9FE1CB;
+      --purple-bg: #26215C;
+      --purple-text: #CECBF6;
+      --amber-bg: #412402;
+      --amber-text: #FAC775;
+      --gray-bg: #2C2C2A;
+      --gray-text: #D3D1C7;
+      --pink-bg: #4B1528;
+      --pink-text: #F4C0D1;
+      --green2-bg: #173404;
+      --green2-text: #C0DD97;
+    }
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 1rem;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  /* Header */
+  .app-header {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .app-title { font-size: 16px; font-weight: 500; color: var(--text); }
+  .app-subtitle { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .live-score { font-size: 22px; font-weight: 500; color: var(--green); }
+  .live-score-label { font-size: 11px; color: var(--text3); text-align: right; }
+
+  /* Filtres */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 0.75rem;
+  }
+  .badge {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 0.5px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .badge:hover { filter: brightness(0.93); }
+  .badge.active { filter: brightness(0.82); font-weight: 700; }
+  .b-all    { background: var(--blue-bg);    color: var(--blue-text);    border-color: var(--blue-text); }
+  .b-reseau { background: var(--blue-bg);    color: var(--blue-text);   }
+  .b-sec    { background: var(--coral-bg);   color: var(--coral-text);  }
+  .b-cryp   { background: var(--teal-bg);    color: var(--teal-text);   }
+  .b-sys    { background: var(--purple-bg);  color: var(--purple-text); }
+  .b-gov    { background: var(--amber-bg);   color: var(--amber-text);  }
+  .b-bash   { background: var(--pink-bg);    color: var(--pink-text);   }
+  .b-win    { background: var(--green2-bg);  color: var(--green2-text); }
+
+  /* Barre de progression */
+  .progress-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 13px;
+    color: var(--text2);
+  }
+  .progress-track {
+    flex: 1;
+    height: 5px;
+    background: var(--bg2);
+    border-radius: 9px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 9px;
+    transition: width 0.4s;
+  }
+
+  /* Carte question */
+  .q-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .q-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .q-num { font-size: 12px; color: var(--text3); }
+  .q-cat {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: var(--radius);
+  }
+  .q-type {
+    font-size: 11px;
+    color: var(--text3);
+    padding: 3px 8px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .q-text {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.55;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+  }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .opt {
+    padding: 11px 16px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border2);
+    background: var(--bg2);
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  .opt:hover:not(:disabled) { background: var(--bg3); border-color: var(--border2); }
+  .opt.correct { background: var(--green-bg); border-color: var(--green); color: var(--green-text); font-weight: 500; }
+  .opt.wrong   { background: var(--red-bg);   border-color: var(--red);   color: var(--red-text); }
+  .opt:disabled { cursor: default; }
+
+  .explication {
+    margin-top: 1rem;
+    padding: 12px 16px;
+    background: var(--bg2);
+    border-left: 3px solid var(--green);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.65;
+  }
+  .explication strong { color: var(--text); }
+
+  /* Navigation */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 9px 22px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border2);
+    background: var(--bg);
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--bg2); }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .btn.primary {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+    font-weight: 500;
+  }
+  .btn.primary:hover { background: #0F6E56; }
+
+  /* Résultats */
+  .result-box { text-align: center; padding: 2rem 1rem; }
+  .result-emoji { font-size: 48px; margin-bottom: 0.5rem; }
+  .result-score { font-size: 52px; font-weight: 500; color: var(--text); }
+  .result-label { font-size: 15px; color: var(--text2); margin: 0.5rem 0 1.5rem; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .stat { background: var(--bg2); border-radius: var(--radius); padding: 0.75rem; }
+  .stat-n { font-size: 24px; font-weight: 500; }
+  .stat-l { font-size: 12px; color: var(--text2); }
+
+  /* Categories perf */
+  .cat-perf { margin: 1rem 0 1.5rem; text-align: left; }
+  .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+  .cat-name { width: 110px; color: var(--text2); }
+  .cat-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 9px; overflow: hidden; }
+  .cat-fill { height: 100%; border-radius: 9px; transition: width 0.6s; }
+  .cat-score { width: 45px; text-align: right; font-weight: 500; }
+
+  @media (max-width: 500px) {
+    .app-header { flex-direction: column; }
+    .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    .btn { padding: 9px 14px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="app-header">
+    <div>
+      <div class="app-title">🔐 Quiz Cybersécurité & Réseaux</div>
+      <div class="app-subtitle">Génie en Herbe — <span id="q-count-header">78 questions</span></div>
+    </div>
+    <div style="text-align:right">
+      <div class="live-score" id="live-score">0</div>
+      <div class="live-score-label">points</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <span class="badge b-all active" onclick="setFilter('all')">Toutes les catégories</span>
+    <span class="badge b-reseau" onclick="setFilter('réseau')">Réseaux</span>
+    <span class="badge b-sec" onclick="setFilter('sécurité')">Sécurité</span>
+    <span class="badge b-cryp" onclick="setFilter('cryptographie')">Cryptographie</span>
+    <span class="badge b-sys" onclick="setFilter('systèmes')">Systèmes</span>
+    <span class="badge b-gov" onclick="setFilter('gouvernance')">Gouvernance</span>
+    <span class="badge b-bash" onclick="setFilter('bash')">Commandes Bash</span>
+    <span class="badge b-win" onclick="setFilter('windows')">Event ID / Sysmon</span>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-track"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+    <span id="prog-txt" style="min-width:35px;text-align:right">0%</span>
+    <span id="q-pos" style="min-width:50px;text-align:right;color:var(--text3)">1 / 50</span>
+  </div>
+
+  <div id="q-area"></div>
+
+  <div class="nav-row">
+    <button class="btn" id="btn-prev" onclick="nav(-1)" disabled>← Précédente</button>
+    <button class="btn" id="btn-shuffle" onclick="shuffle()">🔀 Mélanger</button>
+    <button class="btn primary" id="btn-next" onclick="nav(1)">Suivante →</button>
+  </div>
+
+</div>
+
+<script>
+const ALL_Q = [
+  // ── RÉSEAUX ────────────────────────────────────────────────────────
+  {cat:"réseau",type:"QCM",q:"Quel est le port par défaut de HTTPS ?",opts:["80","443","8080","22"],ans:1,exp:"HTTPS utilise le port <strong>443</strong>. HTTP non sécurisé utilise le port 80."},
+  {cat:"réseau",type:"QCM",q:"Combien de couches comporte le modèle OSI ?",opts:["4","5","7","12"],ans:2,exp:"Le modèle OSI comporte <strong>7 couches</strong> : Physique, Liaison, Réseau, Transport, Session, Présentation, Application."},
+  {cat:"réseau",type:"QCM",q:"Quel protocole associe une adresse IP à une adresse MAC ?",opts:["DNS","DHCP","ARP","ICMP"],ans:2,exp:"<strong>ARP</strong> (Address Resolution Protocol) résout les adresses IP en adresses MAC sur un réseau local."},
+  {cat:"réseau",type:"QCM",q:"Quel protocole est orienté connexion et garantit la livraison des données ?",opts:["UDP","ICMP","TCP","ARP"],ans:2,exp:"<strong>TCP</strong> (Transmission Control Protocol) établit une connexion via le 3-way handshake (SYN, SYN-ACK, ACK) et garantit la livraison via les accusés de réception."},
+  {cat:"réseau",type:"QCM",q:"Combien d'hôtes maximum peut contenir un sous-réseau /26 ?",opts:["30","62","64","126"],ans:1,exp:"/26 = 64 adresses totales. On soustrait 2 (réseau + broadcast) = <strong>62 hôtes utilisables</strong>."},
+  {cat:"réseau",type:"QCM",q:"Quel équipement réseau opère au niveau de la couche 3 du modèle OSI ?",opts:["Hub","Switch","Routeur","Répéteur"],ans:2,exp:"Le <strong>routeur</strong> fonctionne à la couche 3 (Réseau) et route les paquets selon les adresses IP."},
+  {cat:"réseau",type:"QCM",q:"Quel protocole permet l'attribution automatique d'adresses IP ?",opts:["DNS","DHCP","NTP","FTP"],ans:1,exp:"<strong>DHCP</strong> (Dynamic Host Configuration Protocol) attribue automatiquement adresses IP, masques, passerelles et serveurs DNS."},
+  {cat:"réseau",type:"QCM",q:"Quel port est utilisé par SSH ?",opts:["21","22","23","25"],ans:1,exp:"SSH utilise le port <strong>22</strong>. Telnet (non sécurisé) utilise le port 23."},
+  {cat:"réseau",type:"QCM",q:"Quelle est l'adresse de loopback standard en IPv4 ?",opts:["0.0.0.0","192.168.0.1","127.0.0.1","255.255.255.255"],ans:2,exp:"<strong>127.0.0.1</strong> est l'adresse de loopback (localhost). Elle permet à une machine de communiquer avec elle-même."},
+  {cat:"réseau",type:"QCM",q:"Le protocole DNS utilise quel port par défaut ?",opts:["25","53","110","161"],ans:1,exp:"DNS utilise le port <strong>53</strong>, en UDP pour les requêtes normales et en TCP pour les transferts de zone."},
+  {cat:"réseau",type:"QCM",q:"Qu'est-ce que le VLAN ?",opts:["Un protocole de routage","Un réseau local virtuel segmentant un réseau physique","Un type de câble réseau","Un protocole de chiffrement"],ans:1,exp:"Un <strong>VLAN</strong> (Virtual LAN) segmente logiquement un réseau physique en plusieurs réseaux distincts, améliorant sécurité et gestion du trafic."},
+  {cat:"réseau",type:"QCM",q:"Quel protocole gère les messages d'erreur et de diagnostic réseau (utilisé par ping) ?",opts:["TCP","UDP","ICMP","SMTP"],ans:2,exp:"<strong>ICMP</strong> (Internet Control Message Protocol) envoie des messages de diagnostic. La commande ping utilise les messages ICMP Echo Request/Reply."},
+  {cat:"réseau",type:"QCM",q:"Quelle est la différence principale entre un Hub et un Switch ?",opts:["Le hub est plus rapide","Le switch envoie les données à tous les ports, le hub les cible","Le hub utilise les adresses MAC, le switch diffuse","Le switch achemine les trames selon l'adresse MAC (couche 2)"],ans:3,exp:"Un <strong>switch</strong> lit les adresses MAC et envoie les trames uniquement au bon port. Un hub diffuse à tous les ports sans discrimination (obsolète)."},
+  {cat:"réseau",type:"QCM",q:"Que signifie NAT en réseau ?",opts:["Network Analysis Tool","Network Address Translation","Node Authentication Technology","None of the Above"],ans:1,exp:"<strong>NAT</strong> (Network Address Translation) traduit les adresses IP privées en adresse IP publique, permettant à plusieurs machines de partager une seule IP publique."},
+  {cat:"réseau",type:"QCM",q:"Quel masque de sous-réseau correspond à la notation /24 ?",opts:["255.255.0.0","255.0.0.0","255.255.255.0","255.255.255.128"],ans:2,exp:"/24 signifie 24 bits à 1 dans le masque : <strong>255.255.255.0</strong>. Ce masque définit 256 adresses (254 hôtes utiles)."},
+  {cat:"réseau",type:"QCM",q:"Quel protocole est utilisé pour envoyer des emails ?",opts:["IMAP","POP3","SMTP","FTP"],ans:2,exp:"<strong>SMTP</strong> (Simple Mail Transfer Protocol, port 25/587) est le protocole d'envoi de courriels. IMAP et POP3 servent à les recevoir."},
+  {cat:"réseau",type:"QCM",q:"Quelle topologie réseau offre la plus haute redondance ?",opts:["Bus","Étoile","Anneau","Maillée (Mesh)"],ans:3,exp:"La topologie <strong>maillée</strong> connecte chaque nœud à plusieurs autres. Si un lien tombe, le trafic peut emprunter un chemin alternatif — haute redondance."},
+  {cat:"réseau",type:"QCM",q:"IPv6 utilise des adresses de quelle taille ?",opts:["32 bits","64 bits","128 bits","256 bits"],ans:2,exp:"IPv6 utilise des adresses de <strong>128 bits</strong>, notées en hexadécimal (8 groupes de 16 bits). Cela offre un espace quasi infini comparé aux 32 bits d'IPv4."},
+
+  // ── SÉCURITÉ ───────────────────────────────────────────────────────
+  {cat:"sécurité",type:"QCM",q:"Que signifie l'acronyme CIA en cybersécurité ?",opts:["Computer Investigation Agency","Confidentiality, Integrity, Availability","Cyber Intelligence Architecture","Control, Identify, Audit"],ans:1,exp:"La triade <strong>CIA</strong> : Confidentialité (C), Intégrité (I) et Disponibilité (Availability - A) sont les 3 piliers fondamentaux de la sécurité de l'information."},
+  {cat:"sécurité",type:"QCM",q:"Un ransomware chiffre les données de la victime. Quel mécanisme utilise-t-il le plus souvent ?",opts:["Hachage MD5","Chiffrement AES + RSA","Encodage Base64","Compression ZIP"],ans:1,exp:"Les ransomwares utilisent généralement <strong>AES</strong> pour chiffrer rapidement les fichiers, et <strong>RSA</strong> pour chiffrer la clé AES. La clé privée RSA reste chez l'attaquant."},
+  {cat:"sécurité",type:"QCM",q:"Quelle attaque consiste à envoyer massivement des requêtes pour saturer un service ?",opts:["Phishing","SQL Injection","DDoS","Man-in-the-Middle"],ans:2,exp:"<strong>DDoS</strong> (Distributed Denial of Service) utilise un botnet de machines compromises pour submerger un serveur et le rendre indisponible."},
+  {cat:"sécurité",type:"QCM",q:"Quel type d'attaque intercepte et peut modifier les communications entre deux parties ?",opts:["DDoS","Man-in-the-Middle (MitM)","Phishing","Brute Force"],ans:1,exp:"Dans une attaque <strong>MitM</strong>, l'attaquant se positionne entre deux parties communicantes, pouvant lire et modifier les données échangées à leur insu."},
+  {cat:"sécurité",type:"QCM",q:"Qu'est-ce qu'un Zero-Day ?",opts:["Une attaque lancée à minuit","Une vulnérabilité exploitée sans correctif disponible","Un malware qui se déclenche le 1er du mois","Un scan réseau silencieux"],ans:1,exp:"Un <strong>Zero-Day</strong> est une vulnérabilité exploitée avant que le fabricant ou la communauté n'ait eu le temps de publier un correctif (patch)."},
+  {cat:"sécurité",type:"QCM",q:"Quel vecteur d'attaque est principalement utilisé pour le phishing ?",opts:["Clé USB","Email frauduleux","Attaque réseau directe","Bluetooth"],ans:1,exp:"Le <strong>phishing</strong> exploite principalement les emails frauduleux imitant des entités de confiance (banques, services en ligne) pour voler des identifiants."},
+  {cat:"sécurité",type:"QCM",q:"Qu'est-ce qu'une injection SQL ?",opts:["Envoi de spams SQL","Insertion de code SQL malveillant dans un champ de saisie","Injection d'un virus en base de données","Brute force sur un serveur SQL"],ans:1,exp:"L'<strong>injection SQL</strong> exploite une mauvaise validation des entrées pour injecter des commandes SQL malveillantes et manipuler (voler, modifier, supprimer) la base de données."},
+  {cat:"sécurité",type:"QCM",q:"Quel sigle désigne un logiciel espion qui collecte des informations à l'insu de l'utilisateur ?",opts:["Ransomware","Adware","Spyware","Worm"],ans:2,exp:"Un <strong>spyware</strong> est un logiciel malveillant qui surveille l'activité de l'utilisateur et collecte des données (mots de passe, habitudes de navigation) à son insu."},
+  {cat:"sécurité",type:"QCM",q:"Qu'est-ce que le principe du moindre privilège ?",opts:["Réduire le nombre d'administrateurs","N'accorder que les droits strictement nécessaires","Supprimer tous les comptes invités","Utiliser des mots de passe courts"],ans:1,exp:"Le principe du <strong>moindre privilège</strong> (Least Privilege) limite les permissions de chaque utilisateur/processus au strict nécessaire pour réduire la surface d'attaque."},
+  {cat:"sécurité",type:"QCM",q:"Quelle est la différence principale entre un IDS et un IPS ?",opts:["L'IDS est payant, l'IPS est gratuit","L'IDS détecte et alerte (passif), l'IPS détecte et bloque (actif)","L'IDS surveille le réseau, l'IPS surveille les hôtes","Aucune différence"],ans:1,exp:"<strong>IDS</strong> (Intrusion Detection System) est passif — il détecte et alerte. <strong>IPS</strong> (Intrusion Prevention System) est actif — il détecte ET bloque automatiquement."},
+  {cat:"sécurité",type:"QCM",q:"Qu'est-ce qu'un pare-feu à état (stateful firewall) ?",opts:["Analyse uniquement les adresses IP","Suit l'état des connexions TCP/UDP","Bloque tout le trafic sortant","Un antivirus réseau"],ans:1,exp:"Un firewall <strong>stateful</strong> maintient une table d'état des connexions actives. Il peut distinguer le trafic légitime de réponse d'un trafic non sollicité."},
+  {cat:"sécurité",type:"QCM",q:"Qu'est-ce que le XSS (Cross-Site Scripting) ?",opts:["Injection de scripts malveillants côté client","Attaque par force brute sur un site","Interception du trafic HTTPS","Falsification de requêtes inter-sites"],ans:0,exp:"<strong>XSS</strong> permet d'injecter du JavaScript malveillant dans une page web vue par d'autres utilisateurs, pour voler des cookies de session, rediriger, etc."},
+  {cat:"sécurité",type:"QCM",q:"Qu'est-ce que le 'Tailgating' ou 'Piggybacking' ?",opts:["Un type de phishing par SMS","Suivre physiquement quelqu'un dans une zone sécurisée sans badge","Un malware de type rootkit","Une attaque sur les réseaux Wi-Fi"],ans:1,exp:"Le <strong>tailgating</strong> est une attaque physique : l'intrus suit de près une personne autorisée pour entrer dans une zone sécurisée sans s'authentifier."},
+  {cat:"sécurité",type:"QCM",q:"Qu'est-ce qu'un botnet ?",opts:["Un réseau de robots industriels","Un réseau de machines compromises contrôlées à distance","Un logiciel de simulation réseau","Un outil de monitoring"],ans:1,exp:"Un <strong>botnet</strong> est un réseau de machines infectées (bots/zombies) contrôlées à distance via un serveur C&C (Command & Control), utilisé pour lancer des DDoS, envoyer du spam, etc."},
+
+  // ── CRYPTOGRAPHIE ──────────────────────────────────────────────────
+  {cat:"cryptographie",type:"QCM",q:"Quel algorithme de chiffrement est le standard mondial symétrique ?",opts:["DES","RSA","AES","MD5"],ans:2,exp:"<strong>AES</strong> (Advanced Encryption Standard) est le standard de chiffrement symétrique mondial, utilisé avec des clés de 128, 192 ou 256 bits."},
+  {cat:"cryptographie",type:"QCM",q:"Quelle est la principale différence entre chiffrement symétrique et asymétrique ?",opts:["Le symétrique est plus sécurisé","Le symétrique utilise une même clé pour chiffrer et déchiffrer","L'asymétrique est plus rapide","Le symétrique utilise deux clés différentes"],ans:1,exp:"<strong>Chiffrement symétrique</strong> : une seule clé partagée. <strong>Asymétrique</strong> : paire clé publique/privée. Le symétrique est plus rapide ; l'asymétrique résout le problème de distribution de clé."},
+  {cat:"cryptographie",type:"QCM",q:"SHA-256 produit un hash de quelle taille ?",opts:["128 bits","160 bits","256 bits","512 bits"],ans:2,exp:"<strong>SHA-256</strong> (famille SHA-2) produit un condensat de 256 bits soit 64 caractères hexadécimaux. C'est l'algorithme de hachage recommandé actuellement."},
+  {cat:"cryptographie",type:"QCM",q:"Pourquoi MD5 ne doit-il plus être utilisé pour la sécurité ?",opts:["Il est trop lent","Des collisions ont été trouvées","Il ne supporte pas l'UTF-8","Il nécessite une clé secrète"],ans:1,exp:"<strong>MD5</strong> est vulnérable aux attaques par collision : il est possible de créer deux fichiers différents avec le même hash MD5, compromettant l'intégrité des données."},
+  {cat:"cryptographie",type:"QCM",q:"Quel protocole sécurise les communications web (HTTPS) ?",opts:["IPSec","SSL uniquement","TLS (Transport Layer Security)","PGP"],ans:2,exp:"<strong>TLS</strong> (Transport Layer Security) chiffre les communications entre navigateur et serveur. SSL est son prédécesseur obsolète. HTTPS = HTTP + TLS."},
+  {cat:"cryptographie",type:"QCM",q:"À quoi sert le 'sel' (salt) en cryptographie des mots de passe ?",opts:["Ralentir l'algorithme AES","Ajouter une valeur aléatoire avant hachage pour contrer les rainbow tables","Augmenter la taille de la clé RSA","Initialiser le vecteur IV"],ans:1,exp:"Le <strong>salt</strong> est une valeur aléatoire ajoutée au mot de passe avant hachage. Il rend chaque hash unique et empêche l'utilisation de tables précalculées (rainbow tables)."},
+  {cat:"cryptographie",type:"QCM",q:"Quel algorithme est recommandé pour hacher les mots de passe en 2024 ?",opts:["MD5","SHA-1","bcrypt ou Argon2","SHA-256 simple"],ans:2,exp:"<strong>bcrypt</strong> et <strong>Argon2</strong> sont conçus pour être intentionnellement lents et résistants au brute force GPU/ASIC. Un SHA-256 simple est trop rapide pour les mots de passe."},
+  {cat:"cryptographie",type:"QCM",q:"Dans un chiffrement asymétrique, avec quoi chiffre-t-on un message destiné à Bob ?",opts:["La clé privée de Bob","La clé publique de Bob","La clé privée de l'expéditeur","Une clé symétrique partagée"],ans:1,exp:"On chiffre avec la <strong>clé publique du destinataire</strong> (Bob). Seule sa clé privée correspondante peut déchiffrer. C'est le principe fondamental de RSA."},
+  {cat:"cryptographie",type:"QCM",q:"Qu'est-ce qu'une signature numérique ?",opts:["Un dessin électronique","Un hash chiffré avec la clé privée de l'expéditeur","Une empreinte du fichier en MD5","Un certificat SSL"],ans:1,exp:"Une <strong>signature numérique</strong> = hash du message chiffré avec la clé privée de l'expéditeur. Le destinataire vérifie avec la clé publique : garantit intégrité + authenticité + non-répudiation."},
+
+  // ── SYSTÈMES ───────────────────────────────────────────────────────
+  {cat:"systèmes",type:"QCM",q:"Que signifie CVE ?",opts:["Common Vulnerability Exploits","Common Vulnerabilities and Exposures","Cyber Vulnerability Engine","Certified Vulnerability Expert"],ans:1,exp:"<strong>CVE</strong> (Common Vulnerabilities and Exposures) est un identifiant unique attribué à chaque vulnérabilité connue. Ex: CVE-2021-44228 = Log4Shell."},
+  {cat:"systèmes",type:"QCM",q:"Quel outil Linux permet de voir les ports réseau en écoute ?",opts:["ls","chmod","ss / netstat","grep"],ans:2,exp:"La commande <strong>ss -tuln</strong> (ou netstat -tuln) liste les ports en écoute, les protocoles et les processus associés sur un système Linux."},
+  {cat:"systèmes",type:"QCM",q:"Que représentent les permissions '755' sous Linux ?",opts:["rwxrwxrwx","rwxr-xr-x","rw-r--r--","rwxrwxr-x"],ans:1,exp:"755 = 7(rwx) pour le propriétaire, 5(r-x) pour le groupe, 5(r-x) pour les autres. Soit <strong>rwxr-xr-x</strong>. Rappel : r=4, w=2, x=1."},
+  {cat:"systèmes",type:"QCM",q:"Qu'est-ce que BitLocker ?",opts:["Un antivirus Windows","Un outil de chiffrement de disque Windows","Un pare-feu Microsoft","Un gestionnaire de mots de passe"],ans:1,exp:"<strong>BitLocker</strong> est la solution de chiffrement de volume intégrée à Windows, utilisant AES pour protéger les données stockées en cas de vol physique."},
+  {cat:"systèmes",type:"QCM",q:"Quel outil est utilisé pour scanner les ports ouverts d'une machine ?",opts:["Wireshark","Metasploit","Nmap","Burp Suite"],ans:2,exp:"<strong>Nmap</strong> (Network Mapper) est l'outil de référence pour scanner les ports, détecter les services et identifier les systèmes d'exploitation sur des réseaux."},
+  {cat:"systèmes",type:"QCM",q:"Que signifie CVSS ?",opts:["Common Vulnerability Scoring System","Cyber Vulnerability Security Standard","Classified Virus Scanning System","Computer Vulnerability Support Service"],ans:0,exp:"<strong>CVSS</strong> attribue un score de 0 à 10 à une vulnérabilité selon sa criticité (vecteur d'attaque, complexité, impact...). Score ≥ 9.0 = Critique."},
+  {cat:"systèmes",type:"QCM",q:"Quelle est la première phase de la Cyber Kill Chain ?",opts:["Exploitation","Armement","Reconnaissance","Livraison"],ans:2,exp:"La Cyber Kill Chain commence par la <strong>Reconnaissance</strong> : collecte d'informations sur la cible (OSINT, scan réseau, LinkedIn, Shodan...) avant toute attaque."},
+  {cat:"systèmes",type:"QCM",q:"Qu'est-ce qu'un rootkit ?",opts:["Un logiciel de sauvegarde","Un malware qui masque sa présence au niveau système","Un outil de configuration réseau","Un type d'attaque DDoS"],ans:1,exp:"Un <strong>rootkit</strong> est un malware qui s'ancre au niveau bas du système (noyau, bootloader) pour masquer sa présence et celle d'autres malwares aux outils de détection."},
+
+  // ── GOUVERNANCE ────────────────────────────────────────────────────
+  {cat:"gouvernance",type:"QCM",q:"Quelle norme définit le Système de Management de la Sécurité de l'Information (SMSI) ?",opts:["ISO 9001","ISO/IEC 27001","NIST 800-53","PCI-DSS"],ans:1,exp:"<strong>ISO/IEC 27001</strong> définit les exigences pour établir, mettre en œuvre et améliorer un SMSI. C'est la principale norme de certification en sécurité de l'information."},
+  {cat:"gouvernance",type:"QCM",q:"Quelles sont les 5 fonctions du NIST Cybersecurity Framework ?",opts:["Planifier, Faire, Vérifier, Agir, Améliorer","Identifier, Protéger, Détecter, Répondre, Rétablir","Analyser, Concevoir, Implémenter, Tester, Maintenir","Prévenir, Détecter, Corriger, Reporter, Auditer"],ans:1,exp:"Le <strong>NIST CSF</strong> repose sur 5 fonctions : Identify (Identifier), Protect (Protéger), Detect (Détecter), Respond (Répondre), Recover (Rétablir)."},
+  {cat:"gouvernance",type:"QCM",q:"Que signifie RGPD ?",opts:["Règlement Général sur la Protection des Données","Réseau de Gestion des Protocoles Digitaux","Registre Général de Protection et Défense","Règlement de Gestion des Plateformes Digitales"],ans:0,exp:"Le <strong>RGPD</strong> (GDPR en anglais) est le règlement européen sur la protection des données personnelles, entré en vigueur en mai 2018."},
+  {cat:"gouvernance",type:"QCM",q:"Qu'est-ce qu'un SOC en cybersécurité ?",opts:["System Operations Center","Security Operations Center","Software Orchestration Cloud","Secure Output Controller"],ans:1,exp:"Le <strong>SOC</strong> (Security Operations Center) est une équipe dédiée à la surveillance continue (24/7) des systèmes, détection et réponse aux incidents de sécurité."},
+  {cat:"gouvernance",type:"QCM",q:"Quelle est la règle 3-2-1 pour les sauvegardes ?",opts:["3 employés, 2 mots de passe, 1 admin","3 copies, 2 supports différents, 1 copie hors-site","3 sauvegardes/jour, 2 rotations/semaine, 1 archivage/mois","3 disques, 2 NAS, 1 cloud"],ans:1,exp:"La règle <strong>3-2-1</strong> : 3 copies des données, sur 2 types de supports différents, dont 1 stockée hors site — protection contre sinistres locaux (incendie, vol)."},
+  {cat:"gouvernance",type:"QCM",q:"Que signifie SIEM ?",opts:["Security Information and Event Management","Secure Internet and Email Monitoring","System Integrity and Error Management","Software Integration and Evaluation Module"],ans:0,exp:"<strong>SIEM</strong> collecte, corrèle et analyse les logs de l'ensemble du SI en temps réel pour détecter les incidents de sécurité et générer des alertes."},
+  {cat:"gouvernance",type:"QCM",q:"Qu'est-ce que la DMZ en architecture réseau ?",opts:["Une zone de test développeur","Une zone réseau isolée pour les serveurs exposés à Internet","Un protocole de chiffrement","Un type de pare-feu"],ans:1,exp:"La <strong>DMZ</strong> (DeMilitarized Zone) est un sous-réseau isolé entre Internet et le réseau interne, hébergeant les serveurs publics (web, mail) pour limiter les risques d'intrusion interne."},
+
+  // ── COMMANDES BASH ─────────────────────────────────────────────────
+  {cat:"bash",type:"QCM",q:"Quelle commande affiche les ports réseau en écoute sous Linux ?",opts:["ps aux","ls -la","ss -tuln","top"],ans:2,exp:"<strong>ss -tuln</strong> (ou netstat -tuln) liste les ports TCP/UDP en écoute. Options : -t (TCP), -u (UDP), -l (listen), -n (numérique, sans résolution DNS)."},
+  {cat:"bash",type:"QCM",q:"Que fait la commande : chmod 600 id_rsa ?",opts:["Rend le fichier exécutable par tous","Donne les droits rw------- au propriétaire uniquement","Supprime tous les droits","Donne les droits à tous les utilisateurs"],ans:1,exp:"<strong>chmod 600</strong> = rw------- : seul le propriétaire peut lire et écrire. Indispensable pour les clés SSH privées — SSH refuse une clé avec des droits trop ouverts."},
+  {cat:"bash",type:"QCM",q:"Quelle commande permet de scanner les ports ouverts d'une IP distante ?",opts:["ping 192.168.1.1","nmap -sV 192.168.1.1","traceroute 192.168.1.1","dig 192.168.1.1"],ans:1,exp:"<strong>nmap -sV 192.168.1.1</strong> scanne les ports et détecte les versions des services. -sS pour un scan SYN furtif, -p pour spécifier les ports, -A pour la détection d'OS."},
+  {cat:"bash",type:"QCM",q:"Que fait la commande : grep -r 'password' /var/log/ ?",opts:["Supprime les fichiers contenant 'password'","Cherche récursivement la chaîne 'password' dans /var/log/","Chiffre les fichiers logs","Affiche les permissions des logs"],ans:1,exp:"<strong>grep -r</strong> effectue une recherche récursive dans tous les fichiers du répertoire. Très utile en forensics pour chercher des informations sensibles dans les logs."},
+  {cat:"bash",type:"QCM",q:"Quelle commande affiche les processus en cours d'exécution avec leur PID ?",opts:["ls -la","df -h","ps aux","pwd"],ans:2,exp:"<strong>ps aux</strong> liste tous les processus avec : PID, utilisateur, utilisation CPU/RAM, commande. <strong>top</strong> ou <strong>htop</strong> affichent un tableau de bord dynamique en temps réel."},
+  {cat:"bash",type:"QCM",q:"Que fait la commande : find / -perm -4000 -type f 2>/dev/null ?",opts:["Cherche les fichiers modifiés récemment","Cherche les fichiers avec le bit SUID activé","Supprime les fichiers système","Affiche les fichiers de plus de 4 Go"],ans:1,exp:"Cette commande recherche les fichiers avec le bit <strong>SUID</strong> (Set User ID) activé (-perm -4000). Ces fichiers s'exécutent avec les droits du propriétaire (souvent root) — cible classique en élévation de privilèges."},
+  {cat:"bash",type:"QCM",q:"Quelle commande permet de capturer le trafic réseau sur l'interface eth0 ?",opts:["netstat -i eth0","tcpdump -i eth0","ifconfig eth0","arp -a"],ans:1,exp:"<strong>tcpdump -i eth0</strong> capture les paquets réseau sur eth0. Option utile : -w fichier.pcap pour sauvegarder, -n pour ne pas résoudre les noms. Wireshark offre une interface graphique similaire."},
+  {cat:"bash",type:"QCM",q:"Que fait la commande : iptables -A INPUT -p tcp --dport 22 -j DROP ?",opts:["Ouvre le port 22 en entrée","Bloque tout le trafic TCP entrant sur le port 22","Redirige le port 22 vers un autre port","Journalise les connexions SSH"],ans:1,exp:"<strong>iptables -A INPUT</strong> ajoute une règle en entrée. <strong>-p tcp --dport 22</strong> cible le port SSH. <strong>-j DROP</strong> bloque silencieusement les paquets (vs REJECT qui envoie un message d'erreur)."},
+  {cat:"bash",type:"QCM",q:"Quelle commande affiche les connexions réseau actives et les processus associés ?",opts:["ss -tulnp","ping -c 4 8.8.8.8","route -n","arp -n"],ans:0,exp:"<strong>ss -tulnp</strong> (ou netstat -tulnp) affiche les connexions avec les processus (-p). Idéal pour identifier quel programme écoute sur quel port — essentiel en analyse de compromission."},
+  {cat:"bash",type:"QCM",q:"Que fait la commande : cat /etc/passwd | cut -d: -f1 ?",opts:["Affiche les mots de passe en clair","Affiche la liste des noms d'utilisateurs du système","Supprime les utilisateurs inactifs","Chiffre le fichier passwd"],ans:1,exp:"<strong>/etc/passwd</strong> contient les infos utilisateurs (sans les mots de passe — stockés dans /etc/shadow). <strong>cut -d: -f1</strong> découpe par ':' et affiche le 1er champ = les noms d'utilisateurs."},
+  {cat:"bash",type:"QCM",q:"Quelle commande vérifie l'intégrité d'un fichier via son hash SHA-256 ?",opts:["md5sum fichier","sha256sum fichier","file fichier","stat fichier"],ans:1,exp:"<strong>sha256sum fichier</strong> calcule et affiche le hash SHA-256 du fichier. Comparer ce hash avec la valeur officielle permet de vérifier que le fichier n'a pas été altéré (intégrité)."},
+  {cat:"bash",type:"QCM",q:"Quelle commande affiche les 10 dernières lignes d'un fichier log en temps réel ?",opts:["head -10 /var/log/syslog","cat /var/log/syslog","tail -f /var/log/syslog","less /var/log/syslog"],ans:2,exp:"<strong>tail -f</strong> (follow) affiche les nouvelles lignes au fur et à mesure qu'elles sont ajoutées. Indispensable pour surveiller les logs en temps réel lors d'un incident ou d'un test."},
+  {cat:"bash",type:"QCM",q:"Que fait la commande : john --wordlist=rockyou.txt hash.txt ?",opts:["Chiffre le fichier hash.txt","Tente de casser les hashes dans hash.txt via attaque dictionnaire","Génère des hashes MD5","Vérifie l'intégrité des mots de passe"],ans:1,exp:"<strong>John the Ripper</strong> avec --wordlist effectue une attaque par dictionnaire : il teste chaque mot du fichier rockyou.txt (liste de mots de passe courants) contre les hashes du fichier cible."},
+  {cat:"bash",type:"QCM",q:"Quelle commande sous Linux permet de planifier une tâche automatique récurrente ?",opts:["at","cron / crontab -e","systemctl schedule","job --repeat"],ans:1,exp:"<strong>crontab -e</strong> permet d'éditer les tâches planifiées (cron jobs). Format : minute heure jour mois jour_semaine commande. Ex: '0 3 * * * backup.sh' exécute backup.sh à 3h chaque nuit. Utilisé aussi par les malwares pour la persistance."},
+
+  // ── EVENT ID WINDOWS & SYSMON ──────────────────────────────────────
+  {cat:"windows",type:"QCM",q:"Quel Event ID Windows correspond à un échec de connexion (logon failure) ?",opts:["4624","4625","4648","4720"],ans:1,exp:"<strong>Event ID 4625</strong> = échec de connexion (logon failure). Plusieurs 4625 en rafale signalent une attaque brute force. Event ID <strong>4624</strong> = connexion réussie."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID indique une connexion réussie sur un système Windows ?",opts:["4625","4624","4688","4732"],ans:1,exp:"<strong>Event ID 4624</strong> = 'An account was successfully logged on'. Le champ Logon Type est important : type 2 = interactif local, type 3 = réseau, type 10 = RDP."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID Windows signale la création d'un nouveau processus ?",opts:["4624","4698","4688","4740"],ans:2,exp:"<strong>Event ID 4688</strong> = 'A new process has been created'. Il enregistre le nom de l'exécutable, le PID, l'utilisateur et la ligne de commande (si activé) — essentiel pour détecter l'exécution de malwares."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID correspond à la création d'un compte utilisateur sous Windows ?",opts:["4720","4722","4724","4732"],ans:0,exp:"<strong>Event ID 4720</strong> = 'A user account was created'. Une alerte sur cet event peut signaler qu'un attaquant crée un compte backdoor pour maintenir un accès persistant."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID Windows indique qu'un compte a été verrouillé (account lockout) ?",opts:["4625","4740","4648","4771"],ans:1,exp:"<strong>Event ID 4740</strong> = 'A user account was locked out'. Déclenché après X échecs de connexion. Indique souvent une attaque brute force ou credential stuffing en cours."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID signale la création d'une tâche planifiée (scheduled task) ?",opts:["4688","4698","4720","7045"],ans:1,exp:"<strong>Event ID 4698</strong> = 'A scheduled task was created'. Les attaquants créent des tâches planifiées pour la persistance. À corréler avec 4688 pour voir quel processus a créé la tâche."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID correspond à l'installation d'un nouveau service Windows ?",opts:["4688","4698","7045","4624"],ans:2,exp:"<strong>Event ID 7045</strong> (dans le journal System) = 'A new service was installed'. Les rootkits et malwares s'installent souvent comme service. À surveiller attentivement."},
+  {cat:"windows",type:"QCM",q:"Sysmon est un outil de la suite Microsoft Sysinternals. Quel est son rôle principal ?",opts:["Antivirus en temps réel","Surveillance et journalisation avancée des activités système","Pare-feu réseau Windows","Gestionnaire de tâches amélioré"],ans:1,exp:"<strong>Sysmon</strong> (System Monitor) enrichit la journalisation Windows avec des événements détaillés : création de processus, connexions réseau, modifications de registre, chargement de drivers, etc. Indispensable pour les SOC et la détection d'incidents."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID Sysmon correspond à la création d'un processus ?",opts:["Event ID 1","Event ID 3","Event ID 7","Event ID 11"],ans:0,exp:"<strong>Sysmon Event ID 1</strong> = Process Creation. Il inclut la ligne de commande complète, le hash de l'exécutable, le PPID (processus parent) et l'utilisateur — bien plus riche que l'Event ID 4688 natif."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID Sysmon enregistre les connexions réseau initiées par un processus ?",opts:["Sysmon ID 1","Sysmon ID 3","Sysmon ID 7","Sysmon ID 11"],ans:1,exp:"<strong>Sysmon Event ID 3</strong> = Network Connection. Il journalise l'IP source/destination, le port, le protocole et le processus responsable. Permet de détecter les connexions C&C (Command & Control) d'un malware."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID Sysmon détecte le chargement d'un pilote (driver) ou d'une DLL ?",opts:["Sysmon ID 1","Sysmon ID 3","Sysmon ID 7","Sysmon ID 11"],ans:2,exp:"<strong>Sysmon Event ID 7</strong> = Image Loaded (chargement de module/DLL). Permet de détecter le DLL hijacking ou le chargement de drivers malveillants (rootkits). Inclut le hash de la DLL chargée."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID Sysmon surveille la création ou modification de fichiers ?",opts:["Sysmon ID 1","Sysmon ID 3","Sysmon ID 7","Sysmon ID 11"],ans:3,exp:"<strong>Sysmon Event ID 11</strong> = FileCreate. Il enregistre chaque création de fichier avec le chemin, le processus créateur et le hash. Utile pour détecter les ransomwares ou les droppers qui déposent des fichiers malveillants."},
+  {cat:"windows",type:"QCM",q:"Dans quel journal Windows trouve-t-on les événements de sécurité (Event ID 4624, 4625...) ?",opts:["System","Application","Security","Setup"],ans:2,exp:"Le journal <strong>Security</strong> (Sécurité) contient les événements d'audit : connexions, modifications de comptes, accès aux objets, etc. Le journal <strong>System</strong> contient les événements système (services, drivers). Le journal <strong>Application</strong> contient les événements des applications."},
+  {cat:"windows",type:"QCM",q:"Qu'est-ce que le 'Logon Type 3' dans un Event ID 4624 ?",opts:["Connexion interactive locale (bureau)","Connexion réseau (partage de fichiers, SMB)","Connexion RDP","Connexion par service"],ans:1,exp:"<strong>Logon Type 3</strong> = connexion réseau (ex: accès à un partage SMB, Net Use). Type 2 = interactif local, Type 10 = RemoteInteractive (RDP), Type 5 = service. Analyser le type de connexion est crucial lors d'un incident."},
+  {cat:"windows",type:"QCM",q:"Quel Event ID Windows est associé à l'effacement des journaux d'événements (log clearing) ?",opts:["4624","4688","1102","7045"],ans:2,exp:"<strong>Event ID 1102</strong> = 'The audit log was cleared'. C'est un signal d'alarme majeur : effacer les logs est une technique courante des attaquants pour couvrir leurs traces après une intrusion."},
+
+];
+
+const CAT_COLORS = {
+  réseau:        {bg:'var(--blue-bg)',    color:'var(--blue-text)'},
+  sécurité:      {bg:'var(--coral-bg)',   color:'var(--coral-text)'},
+  cryptographie: {bg:'var(--teal-bg)',    color:'var(--teal-text)'},
+  systèmes:      {bg:'var(--purple-bg)',  color:'var(--purple-text)'},
+  gouvernance:   {bg:'var(--amber-bg)',   color:'var(--amber-text)'},
+  bash:          {bg:'var(--pink-bg)',    color:'var(--pink-text)'},
+  windows:       {bg:'var(--green2-bg)', color:'var(--green2-text)'},
+};
+const CAT_FILLS = {
+  réseau:'#378ADD', sécurité:'#D85A30', cryptographie:'#1D9E75',
+  systèmes:'#534AB7', gouvernance:'#BA7517', bash:'#D4537E', windows:'#639922'
+};
+
+let questions = [...ALL_Q];
+let current = 0;
+let answers = {};
+let filter = 'all';
+let filtered = [];
+let score = 0;
+
+function setFilter(f) {
+  filter = f;
+  document.querySelectorAll('.badge').forEach(b => b.classList.remove('active'));
+  const clsMap = {all:'b-all',réseau:'b-reseau',sécurité:'b-sec',cryptographie:'b-cryp',systèmes:'b-sys',gouvernance:'b-gov',bash:'b-bash',windows:'b-win'};
+  document.querySelectorAll('.'+clsMap[f]).forEach(b => b.classList.add('active'));
+  filtered = f === 'all' ? [...questions] : questions.filter(q => q.cat === f);
+  answers = {};
+  score = 0;
+  current = 0;
+  document.getElementById('live-score').textContent = '0';
+  document.getElementById('q-count-header').textContent = filtered.length + ' questions';
+  render();
+}
+
+function shuffle() {
+  for (let i = filtered.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+  }
+  answers = {};
+  score = 0;
+  current = 0;
+  document.getElementById('live-score').textContent = '0';
+  render();
+}
+
+function nav(dir) {
+  const total = filtered.length;
+  if (dir === 1 && current === total - 1 && Object.keys(answers).length === total) {
+    current = total;
+    render();
+    return;
+  }
+  current = Math.max(0, Math.min(total - 1, current + dir));
+  render();
+}
+
+function answer(idx) {
+  if (answers[current] !== undefined) return;
+  const q = filtered[current];
+  answers[current] = idx;
+  if (idx === q.ans) {
+    score++;
+    document.getElementById('live-score').textContent = score;
+  }
+  render();
+}
+
+function render() {
+  const total = filtered.length;
+  const done = Object.keys(answers).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('prog-txt').textContent = pct + '%';
+  document.getElementById('q-pos').textContent = (Math.min(current + 1, total)) + ' / ' + total;
+  document.getElementById('btn-prev').disabled = current === 0;
+
+  const nextBtn = document.getElementById('btn-next');
+  if (done === total && total > 0) {
+    nextBtn.textContent = current === total - 1 ? 'Voir les résultats →' : 'Suivante →';
+    if (current === total - 1) {
+      nextBtn.onclick = () => { current = total; render(); };
+    } else {
+      nextBtn.onclick = () => nav(1);
+    }
+  } else {
+    nextBtn.textContent = 'Suivante →';
+    nextBtn.onclick = () => nav(1);
+    nextBtn.disabled = false;
+  }
+
+  if (current >= total) {
+    showResult();
+    return;
+  }
+
+  if (total === 0) {
+    document.getElementById('q-area').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text2)">Aucune question dans cette catégorie.</div>';
+    return;
+  }
+
+  const q = filtered[current];
+  const sel = answers[current];
+  const done_q = sel !== undefined;
+  const cs = CAT_COLORS[q.cat] || {};
+
+  const optsHTML = q.opts.map((o, i) => {
+    let cls = '';
+    if (done_q) {
+      if (i === q.ans) cls = 'correct';
+      else if (i === sel) cls = 'wrong';
+    }
+    return `<button class="opt ${cls}" ${done_q ? 'disabled' : ''} onclick="answer(${i})">${o}</button>`;
+  }).join('');
+
+  const expHTML = done_q ? `<div class="explication">💡 ${q.exp}</div>` : '';
+
+  document.getElementById('q-area').innerHTML = `
+    <div class="q-card">
+      <div class="q-meta">
+        <span class="q-num">Q${current + 1}</span>
+        <span class="q-cat" style="background:${cs.bg};color:${cs.color}">${q.cat.charAt(0).toUpperCase() + q.cat.slice(1)}</span>
+        <span class="q-type">${q.type}</span>
+      </div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">${optsHTML}</div>
+      ${expHTML}
+    </div>`;
+}
+
+function showResult() {
+  const total = filtered.length;
+  const pct = Math.round((score / total) * 100);
+  const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '👏' : pct >= 40 ? '📚' : '💪';
+  const msg = pct >= 80 ? 'Excellent ! Tu es prêt(e) pour le concours !' : pct >= 60 ? 'Bien joué ! Encore un peu de révision.' : pct >= 40 ? 'Bonne base, continue à réviser !' : 'Continue, la persévérance paie !';
+
+  // Stats par catégorie
+  const cats = ['réseau','sécurité','cryptographie','systèmes','gouvernance','bash','windows'];
+  let catStats = {};
+  cats.forEach(c => { catStats[c] = {ok:0,total:0}; });
+  filtered.forEach((q, i) => {
+    if (catStats[q.cat]) {
+      catStats[q.cat].total++;
+      if (answers[i] === q.ans) catStats[q.cat].ok++;
+    }
+  });
+
+  const catHTML = cats.map(c => {
+    if (!catStats[c].total) return '';
+    const cp = Math.round((catStats[c].ok / catStats[c].total) * 100);
+    return `<div class="cat-row">
+      <span class="cat-name">${c.charAt(0).toUpperCase()+c.slice(1)}</span>
+      <div class="cat-track"><div class="cat-fill" style="width:${cp}%;background:${CAT_FILLS[c]}"></div></div>
+      <span class="cat-score" style="color:${CAT_FILLS[c]}">${catStats[c].ok}/${catStats[c].total}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('q-area').innerHTML = `
+    <div class="q-card result-box">
+      <div class="result-emoji">${emoji}</div>
+      <div class="result-score">${score} / ${total}</div>
+      <div class="result-label">${pct}% &mdash; ${msg}</div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-n" style="color:var(--green)">${score}</div><div class="stat-l">Bonnes réponses</div></div>
+        <div class="stat"><div class="stat-n" style="color:var(--red)">${total - score}</div><div class="stat-l">Erreurs</div></div>
+        <div class="stat"><div class="stat-n">${pct}%</div><div class="stat-l">Score</div></div>
+      </div>
+      <div class="cat-perf">${catHTML}</div>
+      <button class="btn primary" onclick="restart()">🔄 Recommencer</button>
+    </div>`;
+
+  document.getElementById('btn-prev').disabled = true;
+  document.getElementById('btn-next').disabled = true;
+}
+
+function restart() {
+  answers = {};
+  score = 0;
+  current = 0;
+  document.getElementById('live-score').textContent = '0';
+  document.getElementById('btn-prev').disabled = false;
+  document.getElementById('btn-next').disabled = false;
+  shuffle();
+}
+
+setFilter('all');
+shuffle();
+</script>
+</body>
+</html>
